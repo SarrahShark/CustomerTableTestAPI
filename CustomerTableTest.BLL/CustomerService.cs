@@ -16,7 +16,7 @@ namespace CustomerTableTest.BLL
             _customerRepository = customerRepository;
         }
 
-        public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
+        public async Task<List<Customer>> GetAllCustomersAsync()
         {
             return await _customerRepository.GetAllAsync();
         }

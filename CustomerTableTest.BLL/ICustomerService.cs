@@ -9,7 +9,7 @@ namespace CustomerTableTest.BLL
 {
     public interface ICustomerService
     {
-        Task<IEnumerable<Customer>> GetAllCustomersAsync();
+        Task<List<Customer>> GetAllCustomersAsync();
         Task<Customer> GetCustomerByIdAsync(int id);
         Task<Customer> GetCustomerByCodeAsync(string code);
         Task AddCustomerAsync(Customer customer);

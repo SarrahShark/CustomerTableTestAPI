@@ -22,10 +22,10 @@ namespace CustomerTableTestAPI.Controllers
             }
 
             [HttpGet]
-            public async Task<IActionResult> GetAll()
+            public async Task<BaseResponse<List<Customer>>> GetAll()
             {
                 var customers = await _customerService.GetAllCustomersAsync();
-                return Ok(customers);
+                return new BaseResponse<List<Customer>>(customers);
             }
 
             [HttpGet("{id}")]

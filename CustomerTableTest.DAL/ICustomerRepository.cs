@@ -10,7 +10,7 @@ namespace CustomerTableTest.DAL
     
         public interface ICustomerRepository
         {
-            Task<IEnumerable<Customer>> GetAllAsync();
+            Task<List<Customer>> GetAllAsync();
             Task<Customer> GetByIdAsync(int id);
             Task<Customer> GetByCodeAsync(string code);
             Task AddAsync(Customer customer);
