@@ -1,0 +1,6 @@
+@CustomerTableTestAPI_HostAddress = http://localhost:5191
+
+GET {{CustomerTableTestAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
