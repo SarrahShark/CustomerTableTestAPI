@@ -1,49 +1,62 @@
-﻿using CustomerTableTest.DAL;
+﻿using CustomerTableTest.BLL;
+using CustomerTableTest.BLL.Common;
 using CustomerTableTest.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace CustomerTableTest.BLL
+public class CustomerService : ICustomerService
 {
-    public class CustomerService : ICustomerService
+    private readonly ICustomerRepository _customerRepository;
+
+    public CustomerService(ICustomerRepository customerRepository)
     {
-        private readonly ICustomerRepository _customerRepository;
-        public CustomerService(ICustomerRepository customerRepository)
-        {
-            _customerRepository = customerRepository;
-        }
+        _customerRepository = customerRepository;
+    }
 
-        public async Task<List<Customer>> GetAllCustomersAsync()
-        {
-            return await _customerRepository.GetAllAsync();
-        }
+    public async Task<List<Customer>> GetAllCustomersAsync()
+        => (await _customerRepository.GetAllAsync()).ToList();
 
-        public async Task<Customer> GetCustomerByIdAsync(int id)
-        {
-            return await _customerRepository.GetByIdAsync(id);
-        }
+    public async Task<Customer> GetCustomerByIdAsync(int id)
+        => await _customerRepository.GetByIdAsync(id);
 
-        public async Task<Customer> GetCustomerByCodeAsync(string code)
-        {
-            return await _customerRepository.GetByCodeAsync(code);
-        }
+    //public async Task<Customer> GetCustomerByCodeAsync(string code)
+    //    => await _customerRepository.GetByCodeAsync(code);
 
-        public async Task AddCustomerAsync(Customer customer)
-        {
-            await _customerRepository.AddAsync(customer);
-        }
+    public async Task<ServiceResult> AddCustomerAsync(Customer customer)
+    {
+        var existing = await _customerRepository.GetByPhoneAsync(customer.PhoneNumber);
+        if (existing != null)
+            return ServiceResult.Failure("Phone already exists");
 
-        public async Task UpdateCustomerAsync(Customer customer)
-        {
-            await _customerRepository.UpdateAsync(customer);
-        }
+        await _customerRepository.AddAsync(customer);
+        await _customerRepository.SaveChangesAsync();
 
-        public async Task DeleteCustomerAsync(Customer customer)
-        {
-            await _customerRepository.DeleteAsync(customer);
-        }
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> UpdateCustomerAsync(int id, Customer customer)
+    {
+        var existing = await _customerRepository.GetByIdAsync(id);
+        if (existing == null)
+            return ServiceResult.Failure("Customer not found");
+
+        existing.Name = customer.Name;
+        existing.Code = customer.Code;
+        existing.PhoneNumber = customer.PhoneNumber;
+
+        _customerRepository.Update(existing);
+        await _customerRepository.SaveChangesAsync();
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> DeleteCustomerAsync(int id)
+    {
+        var existing = await _customerRepository.GetByIdAsync(id);
+        if (existing == null)
+            return ServiceResult.Failure("Customer not found");
+
+        _customerRepository.Delete(existing);
+        await _customerRepository.SaveChangesAsync();
+
+        return ServiceResult.Success();
     }
 }

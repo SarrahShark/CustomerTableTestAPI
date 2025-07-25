@@ -16,7 +16,8 @@ namespace CustomerTableTest.Models
 
         [Required]
         public string Code { get; set; }  // لازم هيبقى Unique
-
+        
+        [Required]
         public string PhoneNumber { get; set; }
     }
 }
