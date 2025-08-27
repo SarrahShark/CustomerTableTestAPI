@@ -1,15 +1,13 @@
-﻿// DAL/Repositories/IBaseRepository.cs
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace CustomerTableTest.DAL.Repositories
+namespace CustomerTableTest.DAL.Repositories;
+
+public interface IBaseRepository<T> where T : class
 {
-    public interface IBaseRepository<T> where T : class
-    {
-        Task<IEnumerable<T>> GetAllAsync();
-        Task<T?> GetByIdAsync(int id);
-        Task AddAsync(T entity);
-        void Update(T entity);
-        void Delete(T entity);
-        Task<bool> SaveChangesAsync();
-    }
+    Task<T?> GetByIdAsync(int id);
+    IQueryable<T> Query(Expression<Func<T, bool>>? predicate = null);
+    Task AddAsync(T entity);
+    Task UpdateAsync(T entity);
+    Task DeleteAsync(T entity);
+    Task SaveChangesAsync();
 }

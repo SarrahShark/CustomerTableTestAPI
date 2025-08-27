@@ -1,5 +1,5 @@
 ﻿
-using CustomerTableTestAPI.Models.DTOs;
+using CustomerTableTest.Models.DTOs;
 using FluentValidation;
 
 public class CustomerDtoValidator : AbstractValidator<CustomerDto>

@@ -4,8 +4,9 @@ using CustomerTableTest.BLL;
 using CustomerTableTest.DAL;
 using CustomerTableTest.DAL.Repositories;
 using CustomerTableTest.Models;
-using CustomerTableTestAPI.Mapping;
-using CustomerTableTestAPI.Middlewares;
+using CustomerTableTest.Models.Validation;
+using CustomerTableTestAPI.Common.Middlewares;
+//using CustomerTableTestAPI.Middlewares;
 using CustomerTableTestAPI.Models;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -31,11 +32,26 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddDefaultTokenProviders();
 
 // 🔷 Repositories & Services
+//builder.Services.AddScoped(typeof(CustomerTableTest.DAL.Repositories.IBaseRepository<>),
+//                          typeof(CustomerTableTest.DAL.Repositories.BaseRepository<>));
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-//builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
 
+builder.Services.AddScoped<CustomerTableTest.BLL.Services.ICustomerService,
+                           CustomerTableTest.BLL.Services.CustomerService>();
+// Controllers + FluentValidation
+builder.Services.AddControllers(options =>
+{
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+})
+.AddJsonOptions(_ => { });
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CustomerTableTest.Models.Validation.CustomerValidator>();
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 // 🔷 JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
@@ -96,15 +112,37 @@ builder.Services.AddSwaggerGen(c =>
 });
 // 🔷 Controllers
 //builder.Services.AddControllers();
-builder.Services.AddControllers()
-    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CustomerDtoValidator>());
+//builder.Services
+//    .AddControllers(options =>
+//    {
+//        // هنمنع 400 التلقائية عشان الميدلوير هو اللي ينسّق الرد
+//        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+//    })
+//    .AddJsonOptions(o => { /* اختياري لتنسيقات */ });
+
+//builder.Services.AddFluentValidationAutoValidation();
+//builder.Services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
+
+//// مهم: امنعي الـ 400 التلقائي من ApiBehavior
+//builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+//{
+//    options.SuppressModelStateInvalidFilter = true;
+//});
+//builder.Services.AddControllers()
+//    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CustomerDtoValidator>());
 
 
 // 🔷 AutoMapper (هنا قبل الـ Build)
 //builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 //builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+//builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+//builder.Services.AddAutoMapper(cfg =>
+//{
+//    // ضيفي البروفايل صراحةً
+//    cfg.AddProfile<CustomerProfile>();
+//});
 
 
 
@@ -120,11 +158,39 @@ if (app.Environment.IsDevelopment())
 
 
 
+// 3) (اختياري مفيد) تحقّق إعدادات AutoMapper في الـ Dev
+//if (app.Environment.IsDevelopment())
+//{
+//    using var scope = app.Services.CreateScope();
+//    var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+
+//    // لو في Map ناقص/غلط هيفشل الإقلاع برسالة واضحة
+//    mapper.ConfigurationProvider.AssertConfigurationIsValid();
+//}
+//if (app.Environment.IsDevelopment())
+//{
+//    using var scope = app.Services.CreateScope();
+//    var mapper = scope.ServiceProvider.GetRequiredService<IMapper>();
+//    try
+//    {
+//        mapper.ConfigurationProvider.AssertConfigurationIsValid();
+//    }
+//    catch (AutoMapperConfigurationException ex)
+//    {
+//        Console.WriteLine("=== AutoMapper config error ===");
+//        Console.WriteLine(ex.ToString());   // هيطبع النوعين والممّبر اللي بايظ
+//        throw; // سيبّيها تفشل عشان نصلح، أو علّقيها مؤقتًا لو عايزة تشغّلي API بسرعة
+//    }
+//}
+app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 // 🔷 Auth middleware
 
-app.UseMiddleware<ExceptionMiddleware>();
+//app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+//app.UseMiddleware<CustomerTableTestAPI.Common.Middlewares.ExceptionHandlingMiddleware>();
+
 
 // 🔷 Controller Routing
 app.MapControllers();

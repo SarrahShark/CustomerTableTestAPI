@@ -1,48 +1,38 @@
-﻿// DAL/Repositories/BaseRepository.cs
-using CustomerTableTest.Models;
+﻿using CustomerTableTest.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
-namespace CustomerTableTest.DAL.Repositories
+namespace CustomerTableTest.DAL.Repositories;
+
+public class BaseRepository<T> : IBaseRepository<T> where T : class
 {
-    public class BaseRepository<T> : IBaseRepository<T> where T : class
+    private readonly ApplicationDbContext _ctx;
+    private readonly DbSet<T> _set;
+
+    public BaseRepository(ApplicationDbContext ctx)
     {
-        protected readonly ApplicationDbContext _context;
-        protected readonly DbSet<T> _dbSet;
-
-        public BaseRepository(ApplicationDbContext context)
-        {
-            _context = context;
-            _dbSet = context.Set<T>();
-        }
-
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
-
-        public async Task<T?> GetByIdAsync(int id)
-        {
-            return await _dbSet.FindAsync(id);
-        }
-
-        public async Task AddAsync(T entity)
-        {
-            await _dbSet.AddAsync(entity);
-        }
-
-        public void Update(T entity)
-        {
-            _dbSet.Update(entity);
-        }
-
-        public void Delete(T entity)
-        {
-            _dbSet.Remove(entity);
-        }
-
-        public async Task<bool> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
+        _ctx = ctx;
+        _set = _ctx.Set<T>();
     }
+
+    public Task<T?> GetByIdAsync(int id) => _set.FindAsync(id).AsTask();
+
+    public IQueryable<T> Query(Expression<Func<T, bool>>? predicate = null)
+        => predicate is null ? _set.AsQueryable() : _set.Where(predicate);
+
+    public Task AddAsync(T entity) => _set.AddAsync(entity).AsTask();
+
+    public Task UpdateAsync(T entity)
+    {
+        _set.Update(entity);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(T entity)
+    {
+        _set.Remove(entity);
+        return Task.CompletedTask;
+    }
+
+    public Task SaveChangesAsync() => _ctx.SaveChangesAsync();
 }
